@@ -131,6 +131,11 @@ async function handleContinue(
     core.info(`Released lock for: ${releasedId}`)
 
     if (newOrder) {
+        // Delete the old artifact before uploading the new one
+        // This is required by Artifact API v2 which doesn't allow multiple uploads with the same name
+        core.info("Deleting old artifact...")
+        await artifact.deleteArtifact(ARTIFACT_NAME)
+
         fs.writeFileSync(fullPath, newOrder)
         await artifact.uploadArtifact(ARTIFACT_NAME, [fullPath], workspace)
         core.info(`Next in queue: ${newOrder.split(",")[0]}`)

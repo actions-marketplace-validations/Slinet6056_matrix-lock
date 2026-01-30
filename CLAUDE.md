@@ -85,3 +85,6 @@ The action must be built and committed to `dist/` directory:
 - All three operations (init, wait, continue) work on the same artifact name
 - The `wait` step must use polling because GitHub Actions doesn't support push notifications
 - Jobs must handle artifact download failures gracefully (first job's artifact may not exist yet)
+- **Artifact API v2 Limitation**: Cannot upload multiple artifacts with the same name in a single workflow run
+  - Solution: The `continue` step deletes the old artifact before uploading the updated lock file
+  - This is handled by calling `artifact.deleteArtifact()` before `artifact.uploadArtifact()` in src/index.ts:122

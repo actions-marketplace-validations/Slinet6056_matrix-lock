@@ -47,51 +47,51 @@ name: Sequential Matrix Build
 on: [push]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - id: job-1
-            name: "First Job"
-          - id: job-2
-            name: "Second Job"
-          - id: job-3
-            name: "Third Job"
+    build:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                include:
+                    - id: job-1
+                      name: "First Job"
+                    - id: job-2
+                      name: "Second Job"
+                    - id: job-3
+                      name: "Third Job"
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
-      # Initialize lock (only first job)
-      - name: Initialize matrix lock
-        if: matrix.id == 'job-1'
-        uses: Slinet6056/matrix-lock@v2
-        with:
-          step: init
-          order: "job-1,job-2,job-3"
+            # Initialize lock (only first job)
+            - name: Initialize matrix lock
+              if: matrix.id == 'job-1'
+              uses: Slinet6056/matrix-lock@v2
+              with:
+                  step: init
+                  order: "job-1,job-2,job-3"
 
-      # Wait for turn (all jobs)
-      - name: Wait for lock
-        uses: Slinet6056/matrix-lock@v2
-        with:
-          step: wait
-          id: ${{ matrix.id }}
-          retry-count: 12
-          retry-delay: 10
+            # Wait for turn (all jobs)
+            - name: Wait for lock
+              uses: Slinet6056/matrix-lock@v2
+              with:
+                  step: wait
+                  id: ${{ matrix.id }}
+                  retry-count: 12
+                  retry-delay: 10
 
-      # Your actual job steps go here
-      - name: Run build
-        run: |
-          echo "Running ${{ matrix.name }}"
-          # Your build commands...
+            # Your actual job steps go here
+            - name: Run build
+              run: |
+                  echo "Running ${{ matrix.name }}"
+                  # Your build commands...
 
-      # Release lock (all jobs)
-      - name: Release lock
-        if: always()
-        uses: Slinet6056/matrix-lock@v2
-        with:
-          step: continue
+            # Release lock (all jobs)
+            - name: Release lock
+              if: always()
+              uses: Slinet6056/matrix-lock@v2
+              with:
+                  step: continue
 ```
 
 ### Advanced Example with Custom Retry Logic
@@ -100,21 +100,21 @@ jobs:
 - name: Wait for lock with custom retry
   uses: Slinet6056/matrix-lock@v2
   with:
-    step: wait
-    id: ${{ matrix.id }}
-    retry-count: 20      # Try 20 times
-    retry-delay: 15      # Wait 15 seconds between attempts
+      step: wait
+      id: ${{ matrix.id }}
+      retry-count: 20 # Try 20 times
+      retry-delay: 15 # Wait 15 seconds between attempts
 ```
 
 ## Inputs
 
-| Input | Description | Required | Default |
-|-------|-------------|----------|---------|
-| `step` | Action to perform: `init`, `wait`, or `continue` | Yes | - |
-| `order` | Comma-separated list of job IDs (required for `init`) | No | - |
-| `id` | Unique identifier for this job (required for `wait` and `continue`) | No | - |
-| `retry-count` | Maximum number of retry attempts | No | `6` |
-| `retry-delay` | Delay in seconds between retries | No | `10` |
+| Input         | Description                                                         | Required | Default |
+| ------------- | ------------------------------------------------------------------- | -------- | ------- |
+| `step`        | Action to perform: `init`, `wait`, or `continue`                    | Yes      | -       |
+| `order`       | Comma-separated list of job IDs (required for `init`)               | No       | -       |
+| `id`          | Unique identifier for this job (required for `wait` and `continue`) | No       | -       |
+| `retry-count` | Maximum number of retry attempts                                    | No       | `6`     |
+| `retry-delay` | Delay in seconds between retries                                    | No       | `10`    |
 
 ## Common Patterns
 
@@ -122,94 +122,62 @@ jobs:
 
 ```yaml
 strategy:
-  matrix:
-    migration: [init-db, add-users, add-posts, add-comments]
+    matrix:
+        migration: [init-db, add-users, add-posts, add-comments]
 
 steps:
-  - name: Initialize lock
-    if: matrix.migration == 'init-db'
-    uses: Slinet6056/matrix-lock@v2
-    with:
-      step: init
-      order: "init-db,add-users,add-posts,add-comments"
+    - name: Initialize lock
+      if: matrix.migration == 'init-db'
+      uses: Slinet6056/matrix-lock@v2
+      with:
+          step: init
+          order: "init-db,add-users,add-posts,add-comments"
 
-  - name: Wait for lock
-    uses: Slinet6056/matrix-lock@v2
-    with:
-      step: wait
-      id: ${{ matrix.migration }}
+    - name: Wait for lock
+      uses: Slinet6056/matrix-lock@v2
+      with:
+          step: wait
+          id: ${{ matrix.migration }}
 
-  - name: Run migration
-    run: npm run migrate:${{ matrix.migration }}
+    - name: Run migration
+      run: npm run migrate:${{ matrix.migration }}
 
-  - name: Release lock
-    if: always()
-    uses: Slinet6056/matrix-lock@v2
-    with:
-      step: continue
+    - name: Release lock
+      if: always()
+      uses: Slinet6056/matrix-lock@v2
+      with:
+          step: continue
 ```
 
 ### Sequential Deployments
 
 ```yaml
 strategy:
-  matrix:
-    environment: [dev, staging, production]
+    matrix:
+        environment: [dev, staging, production]
 
 steps:
-  - name: Initialize deployment lock
-    if: matrix.environment == 'dev'
-    uses: Slinet6056/matrix-lock@v2
-    with:
-      step: init
-      order: "dev,staging,production"
+    - name: Initialize deployment lock
+      if: matrix.environment == 'dev'
+      uses: Slinet6056/matrix-lock@v2
+      with:
+          step: init
+          order: "dev,staging,production"
 
-  - name: Wait for deployment slot
-    uses: Slinet6056/matrix-lock@v2
-    with:
-      step: wait
-      id: ${{ matrix.environment }}
-      retry-count: 30
-      retry-delay: 20
+    - name: Wait for deployment slot
+      uses: Slinet6056/matrix-lock@v2
+      with:
+          step: wait
+          id: ${{ matrix.environment }}
+          retry-count: 30
+          retry-delay: 20
 
-  - name: Deploy to ${{ matrix.environment }}
-    run: ./deploy.sh ${{ matrix.environment }}
+    - name: Deploy to ${{ matrix.environment }}
+      run: ./deploy.sh ${{ matrix.environment }}
 
-  - name: Release lock
-    if: always()
-    uses: Slinet6056/matrix-lock@v2
-    with:
-      step: continue
+    - name: Release lock
+      if: always()
+      uses: Slinet6056/matrix-lock@v2
+      with:
+          step: continue
 ```
-
-## Troubleshooting
-
-### Lock timeout errors
-
-If you see "Max retries reached" errors, try:
-- Increasing `retry-count`
-- Increasing `retry-delay`
-- Verifying the `order` matches all job IDs
-
-### Artifact not found
-
-Ensure the `init` step completes successfully before other jobs start polling. You may need to add a small delay or use job dependencies.
-
-## Migration from v1
-
-If you're upgrading from v1.x:
-
-1. Update the version in your workflow:
-   ```yaml
-   - uses: Slinet6056/matrix-lock@v2  # was @v1
-   ```
-
-2. The API remains the same, but v2 includes:
-   - Updated to Artifact API v2 (fixes compatibility issues)
-   - TypeScript codebase
-   - Improved error handling and logging
-   - Better performance
-
-## License
-
-MIT License - see [LICENSE](LICENSE) file for details.
