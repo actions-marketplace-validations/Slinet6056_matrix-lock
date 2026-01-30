@@ -1,0 +1,46 @@
+name: CI
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v6
+
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 10
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version: "25"
+                  cache: "pnpm"
+
+            - name: Install dependencies
+              run: pnpm install
+
+            - name: Check formatting
+              run: pnpm run format-check
+
+            - name: Lint
+              run: pnpm run lint
+
+            - name: Build
+              run: pnpm run build
+
+            - name: Check for uncommitted changes
+              run: |
+                  if [ -n "$(git status --porcelain dist/)" ]; then
+                    echo "Error: dist/ has uncommitted changes after build"
+                    git status --porcelain dist/
+                    exit 1
+                  fi

@@ -1,84 +1,215 @@
 <p align="center" style="text-align: center">
-  <a href="https://github.com/rakles/matrix-lock">
+  <a href="https://github.com/Slinet6056/matrix-lock">
     <img alt="Matrix Lock Logo" src=".github/icon.png" width="128" height="128" />
   </a>
 </p>
 
 <h3 align="center">Matrix Lock</h3>
 <p align="center">
-    allows job sequencing within matrix workflows with controlled execution
+    Sequential execution control for GitHub Actions matrix workflows
 </p>
 
 <div align="center">
 
-<a href="https://github.com/rakles/matrix-lock/blob/main/LICENSE">![MIT License](https://img.shields.io/github/license/rakles/matrix-lock)</a>
+[![MIT License](https://img.shields.io/github/license/Slinet6056/matrix-lock)](https://github.com/Slinet6056/matrix-lock/blob/main/LICENSE)
+[![GitHub release](https://img.shields.io/github/v/release/Slinet6056/matrix-lock)](https://github.com/Slinet6056/matrix-lock/releases)
 
 </div>
 
 ## About
-Matrix Lock is a GitHub Action designed to control the execution order of jobs in GitHub Action workflows, especially when dealing with matrix builds that need to run certain jobs sequentially. It ensures that only one job proceeds at a time based on a predefined order, thus preventing race conditions and conflicts.
 
-## How it Works
-The action utilizes a lock file mechanism to manage workflow concurrency. It works in three main steps:
+Matrix Lock is a GitHub Action that provides a locking mechanism to control the execution order of jobs in matrix workflows. It ensures jobs run sequentially rather than in parallel, preventing race conditions and conflicts when needed.
 
-1. **Initialization (`init`):** Establishes the order in which jobs should execute.
-2. **Waiting (`wait`):** Jobs check the lock file and wait for their turn to proceed.
-3. **Continuation (`continue`):** A job moves itself to the next position, allowing the subsequent job to proceed.
+## Features
 
-## Inputs
+- ✨ Simple three-step workflow (init → wait → continue)
+- 🔒 Ensures sequential execution within matrix jobs
+- ⚡ Built with TypeScript and modern tooling
+- 📦 Uses GitHub Actions Artifact API v2
+- 🛡️ Robust error handling and retry logic
+- 📊 Detailed logging for debugging
 
-- `step` (**required**): The operation that the action should perform. Valid values are `init`, `wait`, and `continue`.
-- `order`: Specifies the order for the whole process. Required for the `init` step.
-- `id`: The unique identifier for each job. Required for `wait` and `continue` steps.
-- `retry-count`: The number of attempts a job should make to acquire the lock before failing. Default is 6.
-- `retry-delay`: The time (in seconds) between each retry attempt. Default is 10.
+## How It Works
+
+The action uses GitHub's Artifact storage to manage a lock file that controls job execution order:
+
+1. **Initialize (`init`)**: Creates a lock file with the execution order
+2. **Wait (`wait`)**: Jobs poll the lock file until it's their turn
+3. **Continue (`continue`)**: Releases the lock for the next job in queue
 
 ## Usage
 
-### Workflow Configuration
-
-To use the Matrix Lock action in your workflow, add a step that uses this action in your `.github/workflows` YAML file.
-
-Here is an example snippet showing how to use this action in your workflow:
+### Basic Example
 
 ```yaml
+name: Sequential Matrix Build
+
+on: [push]
+
 jobs:
-  my_matrix_job:
+  build:
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
-          - id: some-id-1
-            name: "Job 1"
-          - id: some-id-2
-            name: "Job 2"
+          - id: job-1
+            name: "First Job"
+          - id: job-2
+            name: "Second Job"
+          - id: job-3
+            name: "Third Job"
+
     steps:
-    - name: "Checkout repository"
-      uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: "Initialize matrix lock"
-      if: matrix.id == some-id-1
-      uses: rakles/matrix-lock@v1
-      with:
-        step: init
-        order: "some-id-1,some-id-2"
+      # Initialize lock (only first job)
+      - name: Initialize matrix lock
+        if: matrix.id == 'job-1'
+        uses: Slinet6056/matrix-lock@v2
+        with:
+          step: init
+          order: "job-1,job-2,job-3"
 
-    - name: "Wait for matrix lock"
-      uses: rakles/matrix-lock@v1
-      with:
-        step: wait
-        id: ${{ matrix.id }}
+      # Wait for turn (all jobs)
+      - name: Wait for lock
+        uses: Slinet6056/matrix-lock@v2
+        with:
+          step: wait
+          id: ${{ matrix.id }}
+          retry-count: 12
+          retry-delay: 10
 
-    # Your job steps go here
+      # Your actual job steps go here
+      - name: Run build
+        run: |
+          echo "Running ${{ matrix.name }}"
+          # Your build commands...
 
-    - name: "Continue matrix lock"
-      uses: rakles/matrix-lock@v1
-      with:
-        step: continue
-        id: ${{ matrix.id }}
+      # Release lock (all jobs)
+      - name: Release lock
+        if: always()
+        uses: Slinet6056/matrix-lock@v2
+        with:
+          step: continue
 ```
 
-In this example:
+### Advanced Example with Custom Retry Logic
 
-- The first job (with `id: some-id-1`) initializes the lock.
-- Each job waits for its turn based on the `id`.
-- After a job completes its steps, it continues the lock to allow the next job to start.
+```yaml
+- name: Wait for lock with custom retry
+  uses: Slinet6056/matrix-lock@v2
+  with:
+    step: wait
+    id: ${{ matrix.id }}
+    retry-count: 20      # Try 20 times
+    retry-delay: 15      # Wait 15 seconds between attempts
+```
+
+## Inputs
+
+| Input | Description | Required | Default |
+|-------|-------------|----------|---------|
+| `step` | Action to perform: `init`, `wait`, or `continue` | Yes | - |
+| `order` | Comma-separated list of job IDs (required for `init`) | No | - |
+| `id` | Unique identifier for this job (required for `wait` and `continue`) | No | - |
+| `retry-count` | Maximum number of retry attempts | No | `6` |
+| `retry-delay` | Delay in seconds between retries | No | `10` |
+
+## Common Patterns
+
+### Sequential Database Migrations
+
+```yaml
+strategy:
+  matrix:
+    migration: [init-db, add-users, add-posts, add-comments]
+
+steps:
+  - name: Initialize lock
+    if: matrix.migration == 'init-db'
+    uses: Slinet6056/matrix-lock@v2
+    with:
+      step: init
+      order: "init-db,add-users,add-posts,add-comments"
+
+  - name: Wait for lock
+    uses: Slinet6056/matrix-lock@v2
+    with:
+      step: wait
+      id: ${{ matrix.migration }}
+
+  - name: Run migration
+    run: npm run migrate:${{ matrix.migration }}
+
+  - name: Release lock
+    if: always()
+    uses: Slinet6056/matrix-lock@v2
+    with:
+      step: continue
+```
+
+### Sequential Deployments
+
+```yaml
+strategy:
+  matrix:
+    environment: [dev, staging, production]
+
+steps:
+  - name: Initialize deployment lock
+    if: matrix.environment == 'dev'
+    uses: Slinet6056/matrix-lock@v2
+    with:
+      step: init
+      order: "dev,staging,production"
+
+  - name: Wait for deployment slot
+    uses: Slinet6056/matrix-lock@v2
+    with:
+      step: wait
+      id: ${{ matrix.environment }}
+      retry-count: 30
+      retry-delay: 20
+
+  - name: Deploy to ${{ matrix.environment }}
+    run: ./deploy.sh ${{ matrix.environment }}
+
+  - name: Release lock
+    if: always()
+    uses: Slinet6056/matrix-lock@v2
+    with:
+      step: continue
+```
+
+## Troubleshooting
+
+### Lock timeout errors
+
+If you see "Max retries reached" errors, try:
+- Increasing `retry-count`
+- Increasing `retry-delay`
+- Verifying the `order` matches all job IDs
+
+### Artifact not found
+
+Ensure the `init` step completes successfully before other jobs start polling. You may need to add a small delay or use job dependencies.
+
+## Migration from v1
+
+If you're upgrading from v1.x:
+
+1. Update the version in your workflow:
+   ```yaml
+   - uses: Slinet6056/matrix-lock@v2  # was @v1
+   ```
+
+2. The API remains the same, but v2 includes:
+   - Updated to Artifact API v2 (fixes compatibility issues)
+   - TypeScript codebase
+   - Improved error handling and logging
+   - Better performance
+
+## License
+
+MIT License - see [LICENSE](LICENSE) file for details.

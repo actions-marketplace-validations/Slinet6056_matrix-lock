@@ -1,16 +1,41 @@
 {
   "name": "matrix-lock",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "2.0.0",
+  "description": "Locking mechanism for GitHub Actions Matrix workflows",
+  "type": "module",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "npm run build:compile && npm run build:cleanup",
+    "build:compile": "ncc build src/index.ts -o dist --license licenses.txt",
+    "build:cleanup": "rm -f dist/*.d.ts dist/*.d.ts.map dist/*.map dist/sourcemap-register.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format-check": "prettier --check \"src/**/*.ts\"",
+    "lint": "eslint src --ext .ts"
   },
-  "keywords": [],
+  "keywords": [
+    "github-actions",
+    "matrix",
+    "lock",
+    "workflow",
+    "concurrency"
+  ],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
-    "@actions/artifact": "^1.1.2",
-    "@actions/core": "^1.10.1"
+    "@actions/artifact": "^6.0.0",
+    "@actions/core": "^3.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@types/node": "^25.1.0",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
+    "@vercel/ncc": "^0.38.4",
+    "eslint": "^9.39.2",
+    "globals": "^17.2.0",
+    "prettier": "^3.8.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.54.0"
   }
 }

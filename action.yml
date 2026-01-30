@@ -1,5 +1,5 @@
 name: 'Matrix Lock'
-description: 'Locking mechanism for Matrices'
+description: 'Locking mechanism for GitHub Actions matrix workflows - controls execution order of matrix jobs'
 
 branding:
   icon: 'lock'
@@ -7,20 +7,22 @@ branding:
 
 inputs:
   step:
-    description: 'init | wait | continue'
+    description: 'Action to perform: init (initialize lock), wait (wait for turn), or continue (release lock)'
     required: true
   order:
-    description: 'the order for the whole process | required for the init step'
+    description: 'Comma-separated list of job IDs in execution order (required for init step)'
     required: false
   id:
-    description: 'the identifier of which it should wait and act | required for the init continue'
+    description: 'Unique identifier for this job (required for wait and continue steps)'
     required: false
   retry-count:
-    description: 'the count of how many times we wait for the lock'
-    default: 6
+    description: 'Maximum number of retry attempts to acquire the lock'
+    default: '6'
+    required: false
   retry-delay:
-    description: 'the delay in seconds before retrying'
-    default: 10
+    description: 'Delay in seconds between retry attempts'
+    default: '10'
+    required: false
 
 runs:
   using: 'node20'
