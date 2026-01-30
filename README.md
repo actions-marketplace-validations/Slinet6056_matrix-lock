@@ -4,7 +4,7 @@
   </a>
 </p>
 
-<h3 align="center">Matrix Lock</h3>
+<h3 align="center">Matrix Sequential Lock</h3>
 <p align="center">
     Sequential execution control for GitHub Actions matrix workflows
 </p>
@@ -66,14 +66,14 @@ jobs:
             # Initialize lock (only first job)
             - name: Initialize matrix lock
               if: matrix.id == 'job-1'
-              uses: Slinet6056/matrix-lock@v2
+              uses: Slinet6056/matrix-lock@v1
               with:
                   step: init
                   order: "job-1,job-2,job-3"
 
             # Wait for turn (all jobs)
             - name: Wait for lock
-              uses: Slinet6056/matrix-lock@v2
+              uses: Slinet6056/matrix-lock@v1
               with:
                   step: wait
                   id: ${{ matrix.id }}
@@ -89,7 +89,7 @@ jobs:
             # Release lock (all jobs)
             - name: Release lock
               if: always()
-              uses: Slinet6056/matrix-lock@v2
+              uses: Slinet6056/matrix-lock@v1
               with:
                   step: continue
 ```
@@ -98,7 +98,7 @@ jobs:
 
 ```yaml
 - name: Wait for lock with custom retry
-  uses: Slinet6056/matrix-lock@v2
+  uses: Slinet6056/matrix-lock@v1
   with:
       step: wait
       id: ${{ matrix.id }}
@@ -128,13 +128,13 @@ strategy:
 steps:
     - name: Initialize lock
       if: matrix.migration == 'init-db'
-      uses: Slinet6056/matrix-lock@v2
+      uses: Slinet6056/matrix-lock@v1
       with:
           step: init
           order: "init-db,add-users,add-posts,add-comments"
 
     - name: Wait for lock
-      uses: Slinet6056/matrix-lock@v2
+      uses: Slinet6056/matrix-lock@v1
       with:
           step: wait
           id: ${{ matrix.migration }}
@@ -144,7 +144,7 @@ steps:
 
     - name: Release lock
       if: always()
-      uses: Slinet6056/matrix-lock@v2
+      uses: Slinet6056/matrix-lock@v1
       with:
           step: continue
 ```
@@ -159,13 +159,13 @@ strategy:
 steps:
     - name: Initialize deployment lock
       if: matrix.environment == 'dev'
-      uses: Slinet6056/matrix-lock@v2
+      uses: Slinet6056/matrix-lock@v1
       with:
           step: init
           order: "dev,staging,production"
 
     - name: Wait for deployment slot
-      uses: Slinet6056/matrix-lock@v2
+      uses: Slinet6056/matrix-lock@v1
       with:
           step: wait
           id: ${{ matrix.environment }}
@@ -177,7 +177,7 @@ steps:
 
     - name: Release lock
       if: always()
-      uses: Slinet6056/matrix-lock@v2
+      uses: Slinet6056/matrix-lock@v1
       with:
           step: continue
 ```

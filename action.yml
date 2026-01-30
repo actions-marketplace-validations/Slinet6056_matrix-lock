@@ -1,4 +1,4 @@
-name: 'Matrix Lock'
+name: 'Matrix Sequential Lock'
 description: 'Locking mechanism for GitHub Actions matrix workflows - controls execution order of matrix jobs'
 
 branding:
